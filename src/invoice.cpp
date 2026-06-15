@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
-// Sử dụng Member Initializer List rất tốt
+// Sử dụng Member Initializer List 
 Invoice::Invoice()
     : invoiceID(""), customerID(""), purchaseDate(""),
       subTotal(0.0), discountRate(0.0), discountAmount(0.0),
