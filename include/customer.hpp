@@ -31,6 +31,12 @@ public:
     // ========== Nghiep vu ==========
     // Hien thi thong tin khach hang ra man hinh
     void displayInfo() const;
+
+    // Kiem tra so dien thoai hop le:
+    // - Dung 10 chu so
+    // - Khong chua ky tu khac
+    // (Goi isValidPhoneNumber() tu validator.hpp)
+    bool validatePhone(const string& phone) const;
 };
 
 #endif // CUSTOMER_HPP

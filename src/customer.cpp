@@ -66,6 +66,10 @@ void Customer::setAddress(string address) {
 // Nghiep vu
 // ==========================================
 
+bool Customer::validatePhone(const string& phone) const {
+    return isValidPhoneNumber(phone);
+}
+
 void Customer::displayInfo() const {
     cout << "-------------------------------------" << endl;
     cout << "Ma KH      : " << customerID << endl;

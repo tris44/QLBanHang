@@ -1,7 +1,9 @@
 #ifndef PRODUCT_HPP
 #define PRODUCT_HPP
+
 #include <string>
 using namespace std;
+
 class Product {
 private:
     string productID;   // Dinh dang: SP + 3 chu so, vi du SP001
@@ -32,6 +34,11 @@ public:
     // ========== Nghiep vu ==========
     // Hien thi thong tin san pham ra man hinh
     void displayInfo() const;
+
+    // Kiem tra ma san pham hop le:
+    // - Dinh dang: SP + 3 chu so (vi du: SP001)
+    // (Goi isValidProductID() tu validator.hpp)
+    bool validateProductID(const string& id) const;
 };
 
 #endif // PRODUCT_HPP

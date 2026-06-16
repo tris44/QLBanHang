@@ -77,6 +77,10 @@ void Product::setVatRate(double rate) {
 // Nghiep vu
 // ==========================================
 
+bool Product::validateProductID(const string& id) const {
+    return isValidProductID(id);
+}
+
 void Product::displayInfo() const {
     cout << "-------------------------------------" << endl;
     cout << "Ma SP      : " << productID << endl;
