@@ -38,7 +38,6 @@ double Invoice::getDiscountAmount() const { return discountAmount; }
 double Invoice::getVatAmount() const { return vatAmount; }
 double Invoice::getFinalTotal() const { return finalTotal; }
 
-// ---- Tính toán theo công thức mục 2.3 ----
 void Invoice::calculateTotal() {
     subTotal = 0.0;
     vatAmount = 0.0;
@@ -66,7 +65,6 @@ void Invoice::displayInfo() const {
               << std::setw(12) << "Don Gia" 
               << std::setw(10) << "Thanh Tien" << std::endl;
 
-    // Tự in chi tiết dòng sản phẩm để tránh phụ thuộc hàm của Người 1 chưa viết
     std::cout << std::fixed << std::setprecision(2);
     for (const auto& detail : details) {
         std::cout << std::left << std::setw(12) << detail.productID 

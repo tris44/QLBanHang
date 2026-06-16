@@ -46,7 +46,7 @@ public:
     double getVatAmount() const;
     double getFinalTotal() const;
 
-    // Hàm tính toán toàn bộ tiền nong cho hóa đơn theo công thức mục 2.3
+    // Hàm tính toán toàn bộ tiền nong cho hóa đơn 
     void calculateTotal();
 
     // Hàm hiển thị thông tin hóa đơn (phục vụ việc xuất/in dữ liệu)
