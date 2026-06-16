@@ -7,18 +7,22 @@ struct InvoiceDetail {
     std::string productID;
     std::string productName;
     double unitPrice;
-    int quantity;
-    double discountRate; // Tỷ lệ chiết khấu riêng của dòng (nếu có), mặc định 0
-    double vatRate;     
-    double lineTotal;    // = quantity * unitPrice
-    double lineVAT;      // = lineTotal * (1 - discountRate) * vatRate
+    int    quantity;
+    double discountRate;
+    double vatRate;
 
-    // Constructor
+    double lineTotal; // = quantity * unitPrice
+    double lineVAT;   // = lineTotal * (1 - discountRate) * vatRate
+
+    // Constructor mặc định
     InvoiceDetail();
-    InvoiceDetail(const std::string& productID, const std::string& productName,
-                   double unitPrice, int quantity,
-                   double discountRate = 0.0, double vatRate = 0.0);
 
+    // Constructor đầy đủ
+    InvoiceDetail(const std::string& productID, const std::string& productName,
+                  double unitPrice, int quantity,
+                  double discountRate = 0.0, double vatRate = 0.0);
+
+    // Tính lineTotal và lineVAT theo công thức mục 2.3
     void calculateLineTotal();
 
     // Hiển thị thông tin dòng hóa đơn

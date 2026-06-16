@@ -1,40 +1,44 @@
 #include "../include/utilities.hpp"
+#include "../include/invoice.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <algorithm>
 #include <iomanip>
 
-// Hàm phụ: tách chuỗi theo dấu '|'
-static std::vector<std::string> splitLine(const std::string& line, char delimiter = '|') {
-    std::vector<std::string> tokens;
-    std::stringstream ss(line);
+// ===== Hàm phụ: tách chuỗi theo dấu '|' =====
+// Trả về số lượng token tách được, lưu vào mảng tokens[]
+static int splitLine(const std::string& line, std::string tokens[], int maxTokens, char delim = '|') {
+    int count = 0;
     std::string token;
-    while (std::getline(ss, token, delimiter)) {
-        tokens.push_back(token);
+    std::stringstream ss(line);
+    while (std::getline(ss, token, delim) && count < maxTokens) {
+        tokens[count++] = token;
     }
-    return tokens;
+    return count;
 }
 
-// ===== Đọc dữ liệu hóa đơn từ file =====
-std::vector<Invoice> loadInvoicesFromFile(const std::string& invoiceFile,
-                                           const std::string& detailFile) {
-    std::vector<Invoice> invoices;
-    std::map<std::string, int> indexByID; // invoiceID -> vị trí trong vector
+// ===== Đọc dữ liệu từ file vào mảng hóa đơn =====
+// invoices.txt      : invoiceID|customerID|purchaseDate|discountRate
+// invoicedetails.txt: invoiceID|productID|productName|unitPrice|quantity|discountRate|vatRate
+int loadInvoicesFromFile(const std::string& invoiceFile,
+                          const std::string& detailFile,
+                          Invoice invoices[],
+                          int maxInvoices) {
+    int invoiceCount = 0;
 
     // ---- Đọc invoices.txt ----
-    // Format: invoiceID|customerID|purchaseDate|discountRate
     std::ifstream finv(invoiceFile);
     if (!finv.is_open()) {
-        std::cerr << "Khong mo duoc file: " << invoiceFile << std::endl;
-        return invoices;
+        std::cout << "Khong mo duoc file: " << invoiceFile << std::endl;
+        return 0;
     }
 
     std::string line;
-    while (std::getline(finv, line)) {
+    std::string tokens[10];
+    while (std::getline(finv, line) && invoiceCount < maxInvoices) {
         if (line.empty()) continue;
-        std::vector<std::string> tokens = splitLine(line);
-        if (tokens.size() < 4) continue;
+        int n = splitLine(line, tokens, 10);
+        if (n < 4) continue;
 
         Invoice inv(tokens[0], tokens[1], tokens[2]);
         try {
@@ -42,32 +46,34 @@ std::vector<Invoice> loadInvoicesFromFile(const std::string& invoiceFile,
         } catch (...) {
             inv.setDiscountRate(0.0);
         }
-
-        indexByID[inv.getInvoiceID()] = invoices.size();
-        invoices.push_back(inv);
+        invoices[invoiceCount++] = inv;
     }
     finv.close();
 
     // ---- Đọc invoicedetails.txt ----
-    // Format: invoiceID|productID|productName|unitPrice|quantity|discountRate|vatRate
     std::ifstream fdet(detailFile);
     if (!fdet.is_open()) {
-        std::cerr << "Khong mo duoc file: " << detailFile << std::endl;
-        return invoices;
+        std::cout << "Khong mo duoc file: " << detailFile << std::endl;
+        return invoiceCount;
     }
 
     while (std::getline(fdet, line)) {
         if (line.empty()) continue;
-        std::vector<std::string> tokens = splitLine(line);
-        if (tokens.size() < 7) continue;
+        int n = splitLine(line, tokens, 10);
+        if (n < 7) continue;
 
-        const std::string& invoiceID = tokens[0];
-        if (indexByID.find(invoiceID) == indexByID.end()) {
-            continue; // Bỏ qua dòng nếu không tìm thấy hóa đơn tương ứng
+        std::string invoiceID = tokens[0];
+
+        // Tìm hóa đơn tương ứng trong mảng (tìm tuyến tính, không dùng map)
+        int idx = -1;
+        for (int i = 0; i < invoiceCount; i++) {
+            if (invoices[i].getInvoiceID() == invoiceID) {
+                idx = i;
+                break;
+            }
         }
+        if (idx == -1) continue;
 
-        std::string productID   = tokens[1];
-        std::string productName = tokens[2];
         double unitPrice, discountRate, vatRate;
         int quantity;
         try {
@@ -76,97 +82,141 @@ std::vector<Invoice> loadInvoicesFromFile(const std::string& invoiceFile,
             discountRate = std::stod(tokens[5]);
             vatRate      = std::stod(tokens[6]);
         } catch (...) {
-            continue; // Bỏ qua dòng lỗi dữ liệu
+            continue;
         }
 
-        InvoiceDetail detail(productID, productName, unitPrice, quantity,
+        InvoiceDetail detail(tokens[1], tokens[2], unitPrice, quantity,
                               discountRate, vatRate);
-
-        int idx = indexByID[invoiceID];
         invoices[idx].addProductDetail(detail);
     }
     fdet.close();
 
-    // Tính tổng tiền cho từng hóa đơn sau khi đã nạp đầy đủ các dòng chi tiết
-    for (auto& inv : invoices) {
-        inv.calculateTotal();
+    // Tính tổng tiền cho từng hóa đơn
+    for (int i = 0; i < invoiceCount; i++) {
+        invoices[i].calculateTotal();
     }
 
-    return invoices;
+    return invoiceCount;
 }
 
-// ===== Thống kê doanh thu theo ngày (YYYY-MM-DD) =====
-std::map<std::string, double> revenueByDay(const std::vector<Invoice>& invoices) {
-    std::map<std::string, double> result;
-    for (const auto& inv : invoices) {
-        result[inv.getPurchaseDate()] += inv.getFinalTotal();
+// ===== Thống kê doanh thu theo ngày =====
+// Lưu kết quả vào 2 mảng song song: dates[] và revenues[]
+// Trả về số lượng ngày khác nhau
+int revenueByDay(Invoice invoices[], int invoiceCount,
+                  std::string dates[], double revenues[], int maxDays) {
+    int dayCount = 0;
+
+    for (int i = 0; i < invoiceCount; i++) {
+        std::string date = invoices[i].getPurchaseDate();
+        double total     = invoices[i].getFinalTotal();
+
+        // Tìm ngày trong mảng (tìm tuyến tính)
+        int found = -1;
+        for (int j = 0; j < dayCount; j++) {
+            if (dates[j] == date) { found = j; break; }
+        }
+
+        if (found != -1) {
+            revenues[found] += total;
+        } else if (dayCount < maxDays) {
+            dates[dayCount]    = date;
+            revenues[dayCount] = total;
+            dayCount++;
+        }
     }
-    return result;
+    return dayCount;
 }
 
 // ===== Thống kê doanh thu theo tháng (YYYY-MM) =====
-std::map<std::string, double> revenueByMonth(const std::vector<Invoice>& invoices) {
-    std::map<std::string, double> result;
-    for (const auto& inv : invoices) {
-        std::string date = inv.getPurchaseDate(); // YYYY-MM-DD
-        if (date.size() >= 7) {
-            std::string month = date.substr(0, 7); // Lấy "YYYY-MM"
-            result[month] += inv.getFinalTotal();
+int revenueByMonth(Invoice invoices[], int invoiceCount,
+                    std::string months[], double revenues[], int maxMonths) {
+    int monthCount = 0;
+
+    for (int i = 0; i < invoiceCount; i++) {
+        std::string date = invoices[i].getPurchaseDate();
+        if (date.size() < 7) continue;
+
+        std::string month = date.substr(0, 7); // Lấy "YYYY-MM"
+        double total      = invoices[i].getFinalTotal();
+
+        int found = -1;
+        for (int j = 0; j < monthCount; j++) {
+            if (months[j] == month) { found = j; break; }
+        }
+
+        if (found != -1) {
+            revenues[found] += total;
+        } else if (monthCount < maxMonths) {
+            months[monthCount]    = month;
+            revenues[monthCount]  = total;
+            monthCount++;
         }
     }
-    return result;
+    return monthCount;
 }
 
-// ===== Top 10 sản phẩm bán chạy theo số lượng =====
-std::vector<ProductSales> top10BestSellingProducts(const std::vector<Invoice>& invoices) {
-    std::map<std::string, ProductSales> salesMap; // productID -> thông tin tổng hợp
+// ===== Top 10 sản phẩm bán chạy (tự viết selection sort) =====
+int top10BestSellingProducts(Invoice invoices[], int invoiceCount,
+                               ProductSales result[], int maxTop) {
+    // Bước 1: Gộp tất cả sản phẩm vào mảng tạm
+    ProductSales temp[MAX_DETAILS * 10]; // đủ lớn cho mọi dòng
+    int tempCount = 0;
 
-    for (const auto& inv : invoices) {
-        for (const auto& detail : inv.getDetails()) {
-            auto it = salesMap.find(detail.productID);
-            if (it == salesMap.end()) {
-                ProductSales ps;
-                ps.productID    = detail.productID;
-                ps.productName  = detail.productName;
-                ps.totalQuantity = detail.quantity;
-                ps.totalRevenue  = detail.lineTotal;
-                salesMap[detail.productID] = ps;
+    for (int i = 0; i < invoiceCount; i++) {
+        for (int j = 0; j < invoices[i].getDetailCount(); j++) {
+            const InvoiceDetail& d = invoices[i].getDetail(j);
+
+            // Tìm sản phẩm trong temp (tìm tuyến tính)
+            int found = -1;
+            for (int k = 0; k < tempCount; k++) {
+                if (temp[k].productID == d.productID) { found = k; break; }
+            }
+
+            if (found != -1) {
+                temp[found].totalQuantity += d.quantity;
+                temp[found].totalRevenue  += d.lineTotal;
             } else {
-                it->second.totalQuantity += detail.quantity;
-                it->second.totalRevenue  += detail.lineTotal;
+                temp[tempCount].productID    = d.productID;
+                temp[tempCount].productName  = d.productName;
+                temp[tempCount].totalQuantity = d.quantity;
+                temp[tempCount].totalRevenue  = d.lineTotal;
+                tempCount++;
             }
         }
     }
 
-    // Chuyển sang vector để sắp xếp
-    std::vector<ProductSales> result;
-    for (const auto& pair : salesMap) {
-        result.push_back(pair.second);
+    // Bước 2: Selection sort giảm dần theo totalQuantity (tự viết)
+    for (int i = 0; i < tempCount - 1; i++) {
+        int maxIdx = i;
+        for (int j = i + 1; j < tempCount; j++) {
+            if (temp[j].totalQuantity > temp[maxIdx].totalQuantity) {
+                maxIdx = j;
+            }
+        }
+        if (maxIdx != i) {
+            ProductSales swap = temp[i];
+            temp[i]    = temp[maxIdx];
+            temp[maxIdx] = swap;
+        }
     }
 
-    // Sắp xếp giảm dần theo tổng số lượng đã bán
-    std::sort(result.begin(), result.end(),
-              [](const ProductSales& a, const ProductSales& b) {
-                  return a.totalQuantity > b.totalQuantity;
-              });
-
-    // Lấy tối đa 10 sản phẩm đầu tiên
-    if (result.size() > 10) {
-        result.resize(10);
+    // Bước 3: Lấy tối đa maxTop phần tử
+    int resultCount = (tempCount < maxTop) ? tempCount : maxTop;
+    for (int i = 0; i < resultCount; i++) {
+        result[i] = temp[i];
     }
-
-    return result;
+    return resultCount;
 }
 
 // ===== Hiển thị báo cáo doanh thu =====
-void displayRevenueReport(const std::map<std::string, double>& revenueMap,
-                           const std::string& title) {
+void displayRevenueReport(std::string keys[], double revenues[],
+                           int count, const std::string& title) {
     std::cout << "===== " << title << " =====" << std::endl;
     std::cout << std::fixed << std::setprecision(2);
     double total = 0.0;
-    for (const auto& pair : revenueMap) {
-        std::cout << pair.first << " : " << pair.second << std::endl;
-        total += pair.second;
+    for (int i = 0; i < count; i++) {
+        std::cout << keys[i] << " : " << revenues[i] << std::endl;
+        total += revenues[i];
     }
     std::cout << "-------------------------------------------" << std::endl;
     std::cout << "TONG DOANH THU : " << total << std::endl;
@@ -174,22 +224,20 @@ void displayRevenueReport(const std::map<std::string, double>& revenueMap,
 }
 
 // ===== Hiển thị top sản phẩm bán chạy =====
-void displayTopProducts(const std::vector<ProductSales>& topProducts) {
-    std::cout << "===== TOP " << topProducts.size() << " SAN PHAM BAN CHAY =====" << std::endl;
+void displayTopProducts(ProductSales topProducts[], int count) {
+    std::cout << "===== TOP " << count << " SAN PHAM BAN CHAY =====" << std::endl;
     std::cout << std::left
               << std::setw(10) << "Ma SP"
-              << std::setw(25) << "Ten SP"
-              << std::setw(12) << "SL ban"
+              << std::setw(22) << "Ten SP"
+              << std::setw(10) << "SL ban"
               << "Doanh thu" << std::endl;
-
     std::cout << std::fixed << std::setprecision(2);
-    for (size_t i = 0; i < topProducts.size(); ++i) {
-        const auto& p = topProducts[i];
+    for (int i = 0; i < count; i++) {
         std::cout << std::left
-                  << std::setw(10) << p.productID
-                  << std::setw(25) << p.productName
-                  << std::setw(12) << p.totalQuantity
-                  << p.totalRevenue << std::endl;
+                  << std::setw(10) << topProducts[i].productID
+                  << std::setw(22) << topProducts[i].productName
+                  << std::setw(10) << topProducts[i].totalQuantity
+                  << topProducts[i].totalRevenue << std::endl;
     }
     std::cout << "=============================================" << std::endl;
 }

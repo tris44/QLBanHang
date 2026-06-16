@@ -2,42 +2,46 @@
 #define UTILITIES_HPP
 
 #include <string>
-#include <vector>
-#include <map>
-#include "invoice.hpp"
 
-// ===== Hằng số chung của dự án =====
-const double VAT_RATE_DEFAULT = 0.10; // VAT mặc định 10%
-const int MAX_STOCK = 10000;          // Tồn kho tối đa cho phép
+// ===== Hằng số chung =====
+const double VAT_RATE_DEFAULT = 0.10;
+const int    MAX_STOCK        = 10000;
+const int    MAX_INVOICES     = 100;
+const int    MAX_DETAILS      = 500;
+const int    MAX_TOP          = 10;
 
-// Cấu trúc lưu thông tin thống kê 1 sản phẩm bán chạy
+// ===== Struct thống kê sản phẩm bán chạy =====
 struct ProductSales {
     std::string productID;
     std::string productName;
-    int totalQuantity;   // Tổng số lượng đã bán
-    double totalRevenue; // Tổng tiền (lineTotal) thu được từ sản phẩm này
+    int    totalQuantity;
+    double totalRevenue;
 };
 
-// ===== Đọc dữ liệu hóa đơn từ file (format pipe |) =====
-// invoices.txt      : invoiceID|customerID|purchaseDate|discountRate
-// invoicedetails.txt: invoiceID|productID|productName|unitPrice|quantity|discountRate|vatRate
-std::vector<Invoice> loadInvoicesFromFile(const std::string& invoiceFile,
-                                           const std::string& detailFile);
+// Forward declaration (tránh include vòng)
+class Invoice;
 
-// ===== Thống kê doanh thu theo ngày =====
-// Trả về map: "YYYY-MM-DD" -> tổng finalTotal trong ngày đó
-std::map<std::string, double> revenueByDay(const std::vector<Invoice>& invoices);
+// ===== Đọc file =====
+int loadInvoicesFromFile(const std::string& invoiceFile,
+                          const std::string& detailFile,
+                          Invoice invoices[],
+                          int maxInvoices);
 
-// ===== Thống kê doanh thu theo tháng =====
-// Trả về map: "YYYY-MM" -> tổng finalTotal trong tháng đó
-std::map<std::string, double> revenueByMonth(const std::vector<Invoice>& invoices);
+// ===== Thống kê doanh thu =====
+int revenueByDay(Invoice invoices[], int invoiceCount,
+                  std::string dates[], double revenues[], int maxDays);
 
-// ===== Top 10 sản phẩm bán chạy (theo số lượng) =====
-std::vector<ProductSales> top10BestSellingProducts(const std::vector<Invoice>& invoices);
+int revenueByMonth(Invoice invoices[], int invoiceCount,
+                    std::string months[], double revenues[], int maxMonths);
 
-// ===== Hiển thị kết quả thống kê =====
-void displayRevenueReport(const std::map<std::string, double>& revenueMap,
-                           const std::string& title);
-void displayTopProducts(const std::vector<ProductSales>& topProducts);
+// ===== Top 10 sản phẩm bán chạy =====
+int top10BestSellingProducts(Invoice invoices[], int invoiceCount,
+                               ProductSales result[], int maxTop);
+
+// ===== Hiển thị =====
+void displayRevenueReport(std::string keys[], double revenues[],
+                           int count, const std::string& title);
+
+void displayTopProducts(ProductSales topProducts[], int count);
 
 #endif
