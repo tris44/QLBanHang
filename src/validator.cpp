@@ -2,11 +2,8 @@
 
 // Kiểm tra mã sản phẩm: đúng định dạng SP + 3 chữ số 
 bool isValidProductID(const std::string& id) {
-    // Độ dài phải đúng 5 ký tự
     if (id.length() != 5) return false;
-    // 2 ký tự đầu phải là "SP"
     if (id.substr(0, 2) != "SP") return false;
-    // 3 ký tự cuối phải là chữ số
     for (int i = 2; i < 5; i++) {
         if (!isdigit(id[i])) return false;
     }
