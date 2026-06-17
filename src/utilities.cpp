@@ -5,8 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-// ===== Hàm phụ: tách chuỗi theo dấu '|' =====
-// Trả về số lượng token tách được, lưu vào mảng tokens[]
+// Hàm phụ: tách chuỗi theo dấu '|'
 static int splitLine(const std::string& line, std::string tokens[], int maxTokens, char delim = '|') {
     int count = 0;
     std::string token;
@@ -17,16 +16,14 @@ static int splitLine(const std::string& line, std::string tokens[], int maxToken
     return count;
 }
 
-// ===== Đọc dữ liệu từ file vào mảng hóa đơn =====
-// invoices.txt      : invoiceID|customerID|purchaseDate|discountRate
-// invoicedetails.txt: invoiceID|productID|productName|unitPrice|quantity|discountRate|vatRate
+// Đọc dữ liệu từ file vào mảng hóa đơn
 int loadInvoicesFromFile(const std::string& invoiceFile,
                           const std::string& detailFile,
                           Invoice invoices[],
                           int maxInvoices) {
     int invoiceCount = 0;
 
-    // ---- Đọc invoices.txt ----
+    // Đọc invoices.txt 
     std::ifstream finv(invoiceFile);
     if (!finv.is_open()) {
         std::cout << "Khong mo duoc file: " << invoiceFile << std::endl;
@@ -50,7 +47,7 @@ int loadInvoicesFromFile(const std::string& invoiceFile,
     }
     finv.close();
 
-    // ---- Đọc invoicedetails.txt ----
+    // Đọc invoicedetails.txt 
     std::ifstream fdet(detailFile);
     if (!fdet.is_open()) {
         std::cout << "Khong mo duoc file: " << detailFile << std::endl;
@@ -64,7 +61,7 @@ int loadInvoicesFromFile(const std::string& invoiceFile,
 
         std::string invoiceID = tokens[0];
 
-        // Tìm hóa đơn tương ứng trong mảng (tìm tuyến tính, không dùng map)
+        // Tìm hóa đơn tương ứng trong mảng (tìm tuyến tính)
         int idx = -1;
         for (int i = 0; i < invoiceCount; i++) {
             if (invoices[i].getInvoiceID() == invoiceID) {
@@ -99,9 +96,7 @@ int loadInvoicesFromFile(const std::string& invoiceFile,
     return invoiceCount;
 }
 
-// ===== Thống kê doanh thu theo ngày =====
-// Lưu kết quả vào 2 mảng song song: dates[] và revenues[]
-// Trả về số lượng ngày khác nhau
+// Thống kê doanh thu theo ngày 
 int revenueByDay(Invoice invoices[], int invoiceCount,
                   std::string dates[], double revenues[], int maxDays) {
     int dayCount = 0;
@@ -127,7 +122,7 @@ int revenueByDay(Invoice invoices[], int invoiceCount,
     return dayCount;
 }
 
-// ===== Thống kê doanh thu theo tháng (YYYY-MM) =====
+// Thống kê doanh thu theo tháng (YYYY-MM)
 int revenueByMonth(Invoice invoices[], int invoiceCount,
                     std::string months[], double revenues[], int maxMonths) {
     int monthCount = 0;
@@ -136,7 +131,7 @@ int revenueByMonth(Invoice invoices[], int invoiceCount,
         std::string date = invoices[i].getPurchaseDate();
         if (date.size() < 7) continue;
 
-        std::string month = date.substr(0, 7); // Lấy "YYYY-MM"
+        std::string month = date.substr(0, 7); 
         double total      = invoices[i].getFinalTotal();
 
         int found = -1;
@@ -155,11 +150,11 @@ int revenueByMonth(Invoice invoices[], int invoiceCount,
     return monthCount;
 }
 
-// ===== Top 10 sản phẩm bán chạy (tự viết selection sort) =====
+// Top 10 sản phẩm bán chạy (tự viết selection sort) 
 int top10BestSellingProducts(Invoice invoices[], int invoiceCount,
                                ProductSales result[], int maxTop) {
     // Bước 1: Gộp tất cả sản phẩm vào mảng tạm
-    ProductSales temp[MAX_DETAILS * 10]; // đủ lớn cho mọi dòng
+    ProductSales temp[MAX_DETAILS * 10]; 
     int tempCount = 0;
 
     for (int i = 0; i < invoiceCount; i++) {
@@ -185,7 +180,7 @@ int top10BestSellingProducts(Invoice invoices[], int invoiceCount,
         }
     }
 
-    // Bước 2: Selection sort giảm dần theo totalQuantity (tự viết)
+    // Bước 2: Selection sort giảm dần theo totalQuantity 
     for (int i = 0; i < tempCount - 1; i++) {
         int maxIdx = i;
         for (int j = i + 1; j < tempCount; j++) {
@@ -208,7 +203,7 @@ int top10BestSellingProducts(Invoice invoices[], int invoiceCount,
     return resultCount;
 }
 
-// ===== Hiển thị báo cáo doanh thu =====
+// Hiển thị báo cáo doanh thu 
 void displayRevenueReport(std::string keys[], double revenues[],
                            int count, const std::string& title) {
     std::cout << "===== " << title << " =====" << std::endl;
@@ -223,7 +218,7 @@ void displayRevenueReport(std::string keys[], double revenues[],
     std::cout << "=============================================" << std::endl;
 }
 
-// ===== Hiển thị top sản phẩm bán chạy =====
+// Hiển thị top sản phẩm bán chạy 
 void displayTopProducts(ProductSales topProducts[], int count) {
     std::cout << "===== TOP " << count << " SAN PHAM BAN CHAY =====" << std::endl;
     std::cout << std::left
