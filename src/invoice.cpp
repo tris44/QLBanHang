@@ -13,7 +13,7 @@ Invoice::Invoice(const std::string& invoiceID, const std::string& customerID,
       detailCount(0), subTotal(0.0), discountRate(0.0),
       discountAmount(0.0), vatAmount(0.0), finalTotal(0.0) {}
 
-// ---- Getter ----
+// Getter 
 std::string Invoice::getInvoiceID()      const { return invoiceID; }
 std::string Invoice::getCustomerID()     const { return customerID; }
 std::string Invoice::getPurchaseDate()   const { return purchaseDate; }
@@ -24,18 +24,18 @@ double      Invoice::getVatAmount()      const { return vatAmount; }
 double      Invoice::getFinalTotal()     const { return finalTotal; }
 int         Invoice::getDetailCount()    const { return detailCount; }
 
-// ---- Setter ----
+// Setter 
 void Invoice::setInvoiceID(const std::string& id)     { invoiceID = id; }
 void Invoice::setCustomerID(const std::string& id)    { customerID = id; }
 void Invoice::setPurchaseDate(const std::string& date) { purchaseDate = date; }
 void Invoice::setDiscountRate(double rate)              { discountRate = rate; }
 
-// ---- Lấy dòng chi tiết theo chỉ số ----
+// Lấy dòng chi tiết theo chỉ số 
 const InvoiceDetail& Invoice::getDetail(int index) const {
     return details[index];
 }
 
-// ---- Thêm dòng chi tiết ----
+// Thêm dòng chi tiết
 bool Invoice::addProductDetail(const InvoiceDetail& detail) {
     if (detailCount >= MAX_DETAILS) {
         std::cout << "Khong the them: da day mang chi tiet hoa don!" << std::endl;
@@ -46,7 +46,7 @@ bool Invoice::addProductDetail(const InvoiceDetail& detail) {
     return true;
 }
 
-// ---- Tính toán theo công thức mục 2.3 ----
+// Tính toán theo công thức 
 void Invoice::calculateTotal() {
     subTotal  = 0.0;
     vatAmount = 0.0;
@@ -61,7 +61,7 @@ void Invoice::calculateTotal() {
     finalTotal     = subTotal - discountAmount + vatAmount;
 }
 
-// ---- Hiển thị hóa đơn ----
+// Hiển thị hóa đơn 
 void Invoice::displayInfo() const {
     std::cout << "===== HOA DON: " << invoiceID << " =====" << std::endl;
     std::cout << "Khach hang : " << customerID  << std::endl;

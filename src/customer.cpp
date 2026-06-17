@@ -3,10 +3,7 @@
 #include <iostream>
 using namespace std;
 
-// ==========================================
 // Constructor
-// ==========================================
-
 Customer::Customer() {
     customerID = "";
     fullName   = "";
@@ -21,19 +18,14 @@ Customer::Customer(string id, string fullName, string phone, string address) {
     this->address    = address;
 }
 
-// ==========================================
 // Getter
-// ==========================================
-
 string Customer::getCustomerID() const { return customerID; }
 string Customer::getFullName()   const { return fullName; }
 string Customer::getPhone()      const { return phone; }
 string Customer::getAddress()    const { return address; }
 
-// ==========================================
-// Setter - dung ham validate tu validator.hpp
-// ==========================================
 
+// Setter - dung ham validate tu validator.hpp
 void Customer::setCustomerID(string id) {
     if (isValidCustomerID(id))
         customerID = id;
@@ -62,10 +54,8 @@ void Customer::setAddress(string address) {
         cout << "[Loi] Dia chi khong duoc de trong." << endl;
 }
 
-// ==========================================
-// Nghiep vu
-// ==========================================
 
+// Nghiep vu
 bool Customer::validatePhone(const string& phone) const {
     return isValidPhoneNumber(phone);
 }

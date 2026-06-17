@@ -4,10 +4,8 @@
 #include <iomanip>
 using namespace std;
 
-// ==========================================
-// Constructor
-// ==========================================
 
+// Constructor
 Product::Product() {
     productID = "";
     name      = "";
@@ -24,20 +22,15 @@ Product::Product(string id, string name, double price, int stock, double vatRate
     this->vatRate    = vatRate;
 }
 
-// ==========================================
-// Getter
-// ==========================================
 
+// Getter
 string Product::getProductID() const { return productID; }
 string Product::getName()      const { return name; }
 double Product::getUnitPrice() const { return unitPrice; }
 int    Product::getStock()     const { return stock; }
 double Product::getVatRate()   const { return vatRate; }
 
-// ==========================================
 // Setter - dung ham validate tu validator.hpp
-// ==========================================
-
 void Product::setProductID(string id) {
     if (isValidProductID(id))
         productID = id;
@@ -73,10 +66,7 @@ void Product::setVatRate(double rate) {
         cout << "[Loi] Ti le VAT phai nam trong khoang [0.0, 1.0]." << endl;
 }
 
-// ==========================================
 // Nghiep vu
-// ==========================================
-
 bool Product::validateProductID(const string& id) const {
     return isValidProductID(id);
 }
